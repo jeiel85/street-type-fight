@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+.claude/
+
+# 홍보용 영상·이미지 원본(용량이 커서 저장소에 올리지 않음)
+promo/
