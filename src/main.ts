@@ -15,6 +15,7 @@ import { PLAZA, TRAINING_DUMMY } from './sim/world';
 import { CONFIG } from './config';
 import { tokenFromCode } from './typing/dubeolsik';
 import { Hud, type Difficulty } from './ui/hud';
+import { GAME_URL, canvasToPng, captureScene, renderScoreCard, shareText, type ScoreCardData } from './ui/scorecard';
 import { WorldLabels } from './ui/labels';
 
 const STEP = 1 / CONFIG.tickHz;
@@ -120,7 +121,70 @@ let attractTarget: string | null = null;
 let attractUntil = 0;
 const held = new Set<string>();
 
+// ───────── 점수 카드 ─────────
+
+let pendingShot = false;
+let sceneShot: HTMLCanvasElement | null = null;
+let card: { blob: Blob; url: string; data: ScoreCardData } | null = null;
+const canCopyImage = 'ClipboardItem' in window && typeof navigator.clipboard?.write === 'function';
+const canShareFiles = (() => {
+  try {
+    return typeof navigator.canShare === 'function' &&
+      navigator.canShare({ files: [new File([''], 'card.png', { type: 'image/png' })] });
+  } catch {
+    return false; // 파일 공유 판별 자체를 못 하는 브라우저
+  }
+})();
+
+function clearCard(): void {
+  if (card) URL.revokeObjectURL(card.url);
+  card = null;
+  sceneShot = null;
+  pendingShot = false;
+}
+
+async function prepareCard(data: ScoreCardData): Promise<void> {
+  try {
+    const blob = await canvasToPng(renderScoreCard(data, sceneShot));
+    if (mode !== 'result') return; // 그사이 다음 판으로 넘어감
+    clearCard();
+    card = { blob, url: URL.createObjectURL(blob), data };
+    hud.setCardPreview(card.url);
+  } catch (err) {
+    console.error(err);
+    hud.setShareNote('점수 카드를 만들지 못했어요.');
+  }
+}
+
+function cardFileName(): string {
+  return `street-type-fight-${card ? Math.round(card.data.kpm) : 0}타.png`;
+}
+
+async function cardAction(action: 'card-save' | 'card-copy' | 'card-share'): Promise<void> {
+  if (!card) { hud.setShareNote('카드를 만드는 중이에요. 잠시 뒤 다시 눌러 주세요.'); return; }
+  try {
+    if (action === 'card-save') {
+      const a = document.createElement('a');
+      a.href = card.url;
+      a.download = cardFileName();
+      a.click();
+      hud.setShareNote('이미지를 저장했어요.');
+    } else if (action === 'card-copy') {
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': card.blob })]);
+      hud.setShareNote('이미지를 복사했어요. Threads 글쓰기 창에 붙여 넣으세요.');
+    } else {
+      const file = new File([card.blob], cardFileName(), { type: 'image/png' });
+      await navigator.share({ files: [file], text: shareText(card.data), url: GAME_URL });
+    }
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') return; // 사용자가 공유 창을 닫음
+    console.warn(err);
+    hud.setShareNote(action === 'card-copy' ? '복사가 안 돼요. 이미지 저장을 써 주세요.' : '공유가 안 돼요. 이미지 저장을 써 주세요.');
+  }
+}
+
 function startMatch(): void {
+  clearCard();
   sfx.unlock();
   match.dispose();
   fx.reset();
@@ -135,6 +199,7 @@ function startMatch(): void {
 }
 
 function toTitle(): void {
+  clearCard();
   match.dispose();
   fx.reset();
   labels.clear();
@@ -162,6 +227,7 @@ async function shareLink(): Promise<void> {
 
 hud.onMenuAction = (action) => {
   if (action === 'share') { void shareLink(); return; }
+  if (action === 'card-save' || action === 'card-copy' || action === 'card-share') { void cardAction(action); return; }
   if (action === 'resume') { mode = 'play'; hud.hideOverlay(); }
   if (action === 'mute') { sfx.setMuted(!sfx.muted); hud.showPause(sfx.muted); }
   if (action === 'title') toTitle();
@@ -346,6 +412,7 @@ function handleEvents(events: SimEvent[]): void {
         fx.respawn(get(e.id)!);
         break;
       case 'matchEnd':
+        if (me) pendingShot = true; // 다음 렌더 직후 마지막 장면을 찍어 둔다
         resultAt = performance.now() + 1800;
         if (me) sfx.fanfare(e.winner === me.team);
         break;
@@ -407,7 +474,10 @@ function frame(nowMs: number): void {
   if (mode === 'play' && resultAt > 0 && nowMs >= resultAt) {
     mode = 'result';
     const me = sim.fighters.get(ME)!;
-    hud.showResult({ winner: sim.winner!, myTeam: me.team, me, kpm: hud.combatKpm(), accuracy: hud.accuracy(), score: sim.score });
+    const kpm = hud.combatKpm();
+    const accuracy = hud.accuracy();
+    hud.showResult({ winner: sim.winner!, myTeam: me.team, me, kpm, accuracy, score: sim.score }, canCopyImage, canShareFiles);
+    void prepareCard({ won: sim.winner === me.team, winner: sim.winner!, score: { ...sim.score }, kpm, accuracy, stats: { ...me.stats } });
   }
 
   const me = match.meId ? sim.fighters.get(match.meId) : undefined;
@@ -419,6 +489,10 @@ function frame(nowMs: number): void {
   props.update(dt, me && me.alive ? me : null);
   if (mode !== 'pause') fx.update(dt, sim);
   stage.render();
+  if (pendingShot) {
+    sceneShot = captureScene(stage.renderer.domElement);
+    pendingShot = false;
+  }
   labels.update(sim, match.dolls, match.meId, dt);
   hud.update(sim, match.meId);
   hud.minimap.draw(sim, match.meId);

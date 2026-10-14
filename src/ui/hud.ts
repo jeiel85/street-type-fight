@@ -14,6 +14,9 @@ const STRATEGIES: { key: string; id: TargetStrategy; label: string }[] = [
   { key: '3', id: 'finish', label: '빈사 상태 적' },
 ];
 
+const MENU_ACTIONS = ['resume', 'mute', 'title', 'share', 'card-save', 'card-copy', 'card-share'] as const;
+export type MenuAction = (typeof MENU_ACTIONS)[number];
+
 export interface ResultData {
   winner: Team;
   myTeam: Team;
@@ -54,7 +57,7 @@ export class Hud {
   private activeTyping = 0;
   private correct = 0;
   private wrong = 0;
-  onMenuAction: (action: 'resume' | 'mute' | 'title' | 'share') => void = () => {};
+  onMenuAction: (action: MenuAction) => void = () => {};
 
   constructor(parent: HTMLElement) {
     this.root = el('div', 'hud', parent);
@@ -77,7 +80,7 @@ export class Hud {
     this.overlay = el('div', 'overlay', parent);
     this.overlay.addEventListener('click', (e) => {
       const action = (e.target as HTMLElement).closest<HTMLElement>('[data-action]')?.dataset.action;
-      if (action === 'resume' || action === 'mute' || action === 'title' || action === 'share') this.onMenuAction(action);
+      if (action && (MENU_ACTIONS as readonly string[]).includes(action)) this.onMenuAction(action as MenuAction);
     });
   }
 
@@ -125,7 +128,8 @@ export class Hud {
       </div>`;
   }
 
-  showResult(r: ResultData): void {
+  /** canCopy/canShare: 이 브라우저가 이미지 복사·파일 공유를 지원하는지(지원할 때만 버튼을 보인다). */
+  showResult(r: ResultData, canCopy: boolean, canShare: boolean): void {
     const won = r.winner === r.myTeam;
     const s = r.me.stats;
     this.overlay.className = `overlay result ${won ? 'win' : 'lose'}`;
@@ -143,8 +147,28 @@ export class Hud {
           <div><b>${s.parries}</b><span>반격</span></div>
           <div><b>${Math.round(s.damageDealt)}</b><span>입힌 피해</span></div>
         </div>
+        <div class="share">
+          <img class="card-preview" alt="점수 카드 미리보기" />
+          <div class="share-actions">
+            <p class="share-title">점수 카드로 자랑하기</p>
+            <button data-action="card-save">이미지 저장</button>
+            ${canCopy ? '<button data-action="card-copy">이미지 복사</button>' : ''}
+            ${canShare ? '<button data-action="card-share">공유하기</button>' : ''}
+            <p class="share-note"></p>
+          </div>
+        </div>
         <p class="start">Enter 를 눌러 다시 한 판</p>
       </div>`;
+  }
+
+  setCardPreview(url: string): void {
+    const img = this.overlay.querySelector<HTMLImageElement>('.card-preview');
+    if (img) img.src = url;
+  }
+
+  setShareNote(text: string): void {
+    const note = this.overlay.querySelector<HTMLElement>('.share-note');
+    if (note) note.textContent = text;
   }
 
   hideOverlay(): void {
