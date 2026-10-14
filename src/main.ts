@@ -167,7 +167,10 @@ async function cardAction(action: 'card-save' | 'card-copy' | 'card-share'): Pro
       const a = document.createElement('a');
       a.href = card.url;
       a.download = cardFileName();
+      // 일부 브라우저(Firefox)는 문서에 붙지 않은 링크의 다운로드를 무시한다.
+      document.body.appendChild(a);
       a.click();
+      a.remove();
       hud.setShareNote('이미지를 저장했어요.');
     } else if (action === 'card-copy') {
       await navigator.clipboard.write([new ClipboardItem({ 'image/png': card.blob })]);
