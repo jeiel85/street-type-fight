@@ -39,16 +39,19 @@ function advance(cand: Candidate, progress: number, switched: boolean): PressOut
 }
 
 export function pressKey(lock: LockState | null, cands: readonly Candidate[], token: string): PressOutcome {
-  const locked = lock ? cands.find((c) => c.id === lock.candId && c.ready) : undefined;
+  const locked = lock ? cands.find((c) => c.id === lock.candId) : undefined;
 
   if (lock && locked) {
     const expected = locked.word.keys[lock.progress] ?? null;
-    if (token === expected) return advance(locked, lock.progress + 1, false);
+    if (locked.ready && token === expected) return advance(locked, lock.progress + 1, false);
 
     // 공격 도중이라도 날아오는 공격의 방어 단어 첫 키를 치면 곧바로 방어로 갈아탄다.
     // (속도가 생명이므로 '잠금 해제' 키를 따로 누르게 하지 않는다.)
     const defense = cands.find((c) => c.kind === 'defense' && c.ready && c.id !== locked.id && c.word.keys[0] === token);
     if (defense) return advance(defense, 1, true);
+
+    // 치던 단어가 잠시 쓸 수 없게 되면(대상이 사거리 밖으로 밀려나는 등) 진행도를 지키고 벌칙 없이 알린다.
+    if (!locked.ready) return { lock, result: { type: 'notReady', cand: locked } };
 
     return { lock, result: { type: 'fumble', expected } };
   }

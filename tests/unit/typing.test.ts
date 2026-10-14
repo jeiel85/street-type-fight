@@ -118,6 +118,15 @@ describe('pressKey (후보 판정)', () => {
     expect(o.lock).toEqual({ candId: 'def:1', progress: 1 });
   });
 
+  it('치던 단어가 잠시 준비 안 됨이 되면 진행도를 지키고 헛손질로 치지 않는다(회귀)', () => {
+    const blocked = [cand('atk', 'attack', '사과', false), cand('def:1', 'defense', '나무')];
+    const o = pressKey({ candId: 'atk', progress: 2 }, blocked, 'ㄱ');
+    expect(o.result.type).toBe('notReady');
+    expect(o.lock).toEqual({ candId: 'atk', progress: 2 });
+    // 방어 끼어들기는 그대로 된다.
+    expect(pressKey({ candId: 'atk', progress: 2 }, blocked, 'ㄴ').lock).toEqual({ candId: 'def:1', progress: 1 });
+  });
+
   it('잠근 후보가 사라지면 잠금을 풀고 새 첫 키로 판정한다', () => {
     const o = pressKey({ candId: 'gone', progress: 2 }, cands, 'ㅈ');
     expect(o.lock).toEqual({ candId: 's0', progress: 1 });

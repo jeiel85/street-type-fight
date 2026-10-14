@@ -295,8 +295,14 @@ function limb(parent: Group, mesh: Mesh, x: number, y: number, z: number): Limb 
   return { pivot, mesh };
 }
 
-/** 같은 모양새(look)의 텍스처는 한 번만 그린다. */
+/** 같은 모양새(look)의 텍스처는 한 판 안에서 한 번만 그린다. */
 const texCache = new Map<string, Texture>();
+
+/** 판이 끝날 때 부른다. 봇 외형이 판마다 달라 캐시를 비우지 않으면 텍스처가 계속 쌓인다. */
+export function releaseDollTextures(): void {
+  for (const t of texCache.values()) t.dispose();
+  texCache.clear();
+}
 function cached(key: string, make: () => Texture): Texture {
   let t = texCache.get(key);
   if (!t) { t = make(); texCache.set(key, t); }
@@ -549,8 +555,15 @@ export class PaperDoll {
     this.head.mesh.material = this.matWith(this.head.mesh, this.heads[expr]);
   }
 
+  /** 판이 끝나면 이 인형만의 GPU 자원을 놓는다. 캐시된 부위 텍스처와 그림자 도형은 다른 인형과 공유하므로 남긴다. */
   dispose(): void {
     this.root.removeFromParent();
     this.shadow.removeFromParent();
+    this.root.traverse((o) => {
+      if (!(o instanceof Mesh)) return;
+      o.geometry.dispose();
+      (o.material as MeshBasicMaterial).dispose();
+    });
+    (this.shadow.material as MeshBasicMaterial).dispose();
   }
 }

@@ -64,6 +64,21 @@ describe('Sim 공격', () => {
     expect(a.stats.wrong).toBe(2);
   });
 
+  it('오타 유예는 첫 오타에서 0.4초로 고정되고, 연타해도 늘어나지 않는다(회귀)', () => {
+    const { sim, a } = duel();
+    type(sim, a, a.attackWord, 1);
+    const expected = a.attackWord.keys[1]!;
+    const wrong = expected === 'ㅋ' ? 'ㅌ' : 'ㅋ';
+    sim.drainEvents();
+    sim.pressKey('a', wrong); // 0.00초: 벌칙
+    run(sim, 0.3);
+    sim.pressKey('a', wrong); // 0.30초: 유예 안
+    run(sim, 0.3);
+    sim.pressKey('a', wrong); // 0.60초: 첫 오타 기준 유예가 끝났으므로 다시 벌칙
+    const ev = sim.drainEvents().map((e) => e.t).filter((t) => t === 'fumble' || t === 'reject');
+    expect(ev).toEqual(['fumble', 'reject', 'fumble']);
+  });
+
   it('안전지대 안에서는 공격할 수 없다', () => {
     const sim = new Sim(3);
     const a = sim.addFighter({ id: 'a', name: 'A', team: 'blue', spawn: { x: -30, z: 0 } });
@@ -123,6 +138,31 @@ describe('Sim 스킬과 방어', () => {
     type(sim, b, dw);
     expect(sim.threats).toHaveLength(0);
     expect(b.stats.parries + b.stats.blocks).toBe(1);
+  });
+
+  it('대상이 교전 거리 밖으로 밀려나도 공격 단어 진행도는 남는다(회귀)', () => {
+    const { sim, a, b } = duel();
+    type(sim, a, a.attackWord, 2);
+    b.x = 9; // 교전 거리 8 밖, 대상 유지 거리(10) 안
+    sim.step(DT);
+    sim.drainEvents();
+    sim.pressKey('a', a.attackWord.keys[2]!);
+    expect(sim.drainEvents().map((e) => e.t)).toEqual(['notReady']);
+    expect(a.lock).toEqual({ candId: 'atk', progress: 2 });
+    expect(a.stats.wrong).toBe(0);
+  });
+
+  it('마을 안에서 막은 공격은 반격 피해 없이 취소된다', () => {
+    const sim = new Sim(5);
+    const a = sim.addFighter({ id: 'a', name: 'A', team: 'blue', spawn: { x: -20, z: 0 } });
+    const b = sim.addFighter({ id: 'b', name: 'B', team: 'red', spawn: { x: -18, z: 0 } });
+    sim.step(DT);
+    type(sim, b, skill(b, 'jangpung'));
+    a.x = -29; // 청룡 마을 안으로
+    type(sim, a, defenseWord(sim, a));
+    expect(b.hp).toBe(CONFIG.fighter.maxHp);
+    expect(a.stats.parries).toBe(0);
+    expect(sim.threats).toHaveLength(0);
   });
 
   it('철벽 중에는 잽 피해가 없다', () => {

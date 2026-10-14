@@ -240,15 +240,16 @@ export class Sim {
         break;
       case 'fumble':
         f.stats.wrong++;
+        // 유예는 벌칙을 준 첫 오타 기준으로만 잡는다(연타로 유예가 끝없이 늘어나지 않게).
         if (this.time >= f.fumbleUntil) {
           f.combo = 0;
           this.addGauge(f, CONFIG.gauge.fumble);
           this.setAnim(f, 'fumble');
           this.emit({ t: 'fumble', id, expected: result.expected });
+          f.fumbleUntil = this.time + CONFIG.combat.fumbleWindow;
         } else {
           this.emit({ t: 'reject', id });
         }
-        f.fumbleUntil = this.time + CONFIG.combat.fumbleWindow;
         break;
     }
   }
@@ -457,6 +458,11 @@ export class Sim {
     if (i < 0) return;
     const th = this.threats[i]!;
     this.threats.splice(i, 1);
+    if (this.inSafeZone(f)) {
+      // 마을에서는 싸움이 없다: 반격 피해 없이 그 공격을 없던 일로 한다.
+      this.emit({ t: 'resolve', threat: th, outcome: 'cancel', dmg: 0 });
+      return;
+    }
     const remaining = (th.deadline - this.time) / (th.deadline - th.start);
     const attacker = this.fighters.get(th.attackerId);
     if (remaining >= CONFIG.combat.parryRatio && attacker?.alive) {

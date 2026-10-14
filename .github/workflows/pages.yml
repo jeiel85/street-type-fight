@@ -1,6 +1,6 @@
 name: Pages
 
-# PR에서는 테스트·빌드만, main에 들어오면 GitHub Pages로 배포한다.
+# PR·기능 브랜치에서는 테스트·빌드만, main에서만 GitHub Pages로 배포한다(수동 실행 포함).
 on:
   pull_request:
   push:
@@ -12,7 +12,8 @@ permissions:
 
 concurrency:
   group: pages-${{ github.ref }}
-  cancel-in-progress: true
+  # PR은 새 커밋이 오면 이전 검사를 끊고, main 배포는 중간에 끊지 않는다.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
@@ -28,13 +29,13 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: touch dist/.nojekyll
-      - if: github.event_name != 'pull_request'
+      - if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v5
         with:
           path: dist
 
   deploy:
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     permissions:

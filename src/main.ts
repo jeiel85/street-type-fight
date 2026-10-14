@@ -4,7 +4,7 @@ import './style.css';
 import { Vector3 } from 'three';
 import { Sfx } from './audio/sfx';
 import { Fx } from './render/fx';
-import { PaperDoll } from './render/paperdoll';
+import { PaperDoll, releaseDollTextures } from './render/paperdoll';
 import { Props } from './render/props';
 import { Stage } from './render/stage';
 import { Terrain } from './render/terrain';
@@ -83,6 +83,7 @@ class Match {
 
   dispose(): void {
     for (const d of this.dolls.values()) d.dispose();
+    releaseDollTextures();
   }
 }
 
@@ -392,6 +393,16 @@ function frame(nowMs: number): void {
     handleEvents(sim.drainEvents());
   }
   const alpha = acc / STEP;
+
+  // 타이틀 뒤 데모 대전도 15킬이면 끝나므로, 멈춘 화면이 되지 않게 새 판을 다시 돌린다.
+  if (mode === 'title' && resultAt > 0 && nowMs >= resultAt) {
+    match.dispose();
+    fx.reset();
+    labels.clear();
+    match = new Match(stage, false, difficulty);
+    resultAt = -1;
+    return;
+  }
 
   if (mode === 'play' && resultAt > 0 && nowMs >= resultAt) {
     mode = 'result';
