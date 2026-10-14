@@ -89,7 +89,18 @@ class Match {
 // ───────── 조립 ─────────
 
 const app = document.getElementById('app')!;
-const stage = new Stage(app);
+let stage: Stage;
+try {
+  stage = new Stage(app);
+} catch (err) {
+  // WebGL을 못 쓰는 브라우저·기기: 빈 화면 대신 이유를 보여 주고, 원인은 콘솔에 그대로 남긴다.
+  app.innerHTML = `<div class="overlay"><div class="panel small"><h2>3D를 켤 수 없어요</h2>
+    <p>이 브라우저에서 WebGL을 사용할 수 없습니다. 최신 Chrome·Edge·Firefox에서 하드웨어 가속을 켜고 다시 열어 주세요.</p></div></div>`;
+  throw err;
+}
+/** 마우스 같은 정밀 포인터가 하나도 없으면 폰·태블릿으로 본다(키보드가 없을 가능성이 큼). */
+const touchOnly = !window.matchMedia('(any-pointer: fine)').matches;
+let shareNote = '';
 const terrain = new Terrain();
 const props = new Props();
 stage.scene.add(terrain.group, props.group);
@@ -128,10 +139,28 @@ function toTitle(): void {
   labels.clear();
   match = new Match(stage, false, difficulty);
   mode = 'title';
-  hud.showTitle(difficulty);
+  hud.showTitle(difficulty, touchOnly, shareNote);
+}
+
+async function shareLink(): Promise<void> {
+  const url = location.href.split('#')[0]!;
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: document.title, text: '자판으로 치고받는 동네 대난투 — PC에서 열어 보세요', url });
+      return;
+    }
+    await navigator.clipboard.writeText(url);
+    shareNote = '링크를 복사했어요. PC로 보내서 열어 주세요.';
+  } catch (err) {
+    // 사용자가 공유 창을 닫은 경우는 오류가 아니다.
+    if (err instanceof DOMException && err.name === 'AbortError') return;
+    shareNote = '자동 복사가 안 돼요. 위 주소를 길게 눌러 복사해 주세요.';
+  }
+  if (mode === 'title') hud.showTitle(difficulty, touchOnly, shareNote);
 }
 
 hud.onMenuAction = (action) => {
+  if (action === 'share') { void shareLink(); return; }
   if (action === 'resume') { mode = 'play'; hud.hideOverlay(); }
   if (action === 'mute') { sfx.setMuted(!sfx.muted); hud.showPause(sfx.muted); }
   if (action === 'title') toTitle();
@@ -150,7 +179,7 @@ window.addEventListener('keydown', (e) => {
     if (code === 'Enter') startMatch();
     else if (code === 'ArrowLeft' || code === 'ArrowRight') {
       difficulty = Math.max(0, Math.min(2, difficulty + (code === 'ArrowLeft' ? -1 : 1))) as Difficulty;
-      hud.showTitle(difficulty);
+      hud.showTitle(difficulty, touchOnly, shareNote);
     }
     if (code in ARROWS || code === 'Space' || code === 'Tab') e.preventDefault();
     return;
@@ -389,5 +418,5 @@ if (import.meta.env.DEV) {
   Object.assign(window, { __game: { stage, get sim() { return match.sim; }, get mode() { return mode; } } });
 }
 
-hud.showTitle(difficulty);
+hud.showTitle(difficulty, touchOnly, shareNote);
 requestAnimationFrame(frame);

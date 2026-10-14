@@ -54,7 +54,7 @@ export class Hud {
   private activeTyping = 0;
   private correct = 0;
   private wrong = 0;
-  onMenuAction: (action: 'resume' | 'mute' | 'title') => void = () => {};
+  onMenuAction: (action: 'resume' | 'mute' | 'title' | 'share') => void = () => {};
 
   constructor(parent: HTMLElement) {
     this.root = el('div', 'hud', parent);
@@ -77,13 +77,14 @@ export class Hud {
     this.overlay = el('div', 'overlay', parent);
     this.overlay.addEventListener('click', (e) => {
       const action = (e.target as HTMLElement).closest<HTMLElement>('[data-action]')?.dataset.action;
-      if (action === 'resume' || action === 'mute' || action === 'title') this.onMenuAction(action);
+      if (action === 'resume' || action === 'mute' || action === 'title' || action === 'share') this.onMenuAction(action);
     });
   }
 
   // ───────── 메뉴 화면 ─────────
 
-  showTitle(diff: Difficulty): void {
+  /** touchOnly: 마우스·키보드 없는 기기(폰)로 들어온 경우. 게임은 물리 키보드가 필요하므로 PC로 안내한다. */
+  showTitle(diff: Difficulty, touchOnly = false, shareNote = ''): void {
     this.root.classList.add('hidden');
     this.overlay.className = 'overlay title';
     this.overlay.innerHTML = `
@@ -98,9 +99,18 @@ export class Hud {
           <li><b>오타</b> 헛손질하면 콤보가 끊긴다. 빠르게, 그리고 정확하게.</li>
         </ul>
         <p class="keys"><kbd>←↑↓→</kbd> 이동 <kbd>Tab</kbd> 대상 <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> 전략 <kbd>Backspace</kbd> 취소 <kbd>Esc</kbd> 메뉴</p>
+        ${touchOnly ? `
+        <div class="pc-only">
+          <p><b>⌨️ PC 키보드로 하는 게임이에요</b></p>
+          <p>지금 기기에서는 칠 수가 없어요. 링크를 PC로 보내서 열어 주세요.</p>
+          <button data-action="share">링크 보내기</button>
+          <p class="url">${escapeHtml(location.href)}</p>
+          ${shareNote ? `<p class="note">${escapeHtml(shareNote)}</p>` : ''}
+          <p class="note">키보드를 연결했다면 Enter 를 눌러 시작할 수 있어요.</p>
+        </div>` : `
         <p class="diff">상대 실력 <kbd>←</kbd> <b>${DIFFICULTY_LABEL[diff]}</b> <kbd>→</kbd></p>
         <p class="start">Enter 를 눌러 시작</p>
-        <p class="note">한/영 전환과 상관없이 두벌식 자판 위치로 입력됩니다.</p>
+        <p class="note">한/영 전환과 상관없이 두벌식 자판 위치로 입력됩니다.</p>`}
       </div>`;
   }
 

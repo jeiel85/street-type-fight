@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "description": "타자로 치고받는 2.5D 오픈월드 난투 — 전투 프로토타입 (P0).",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",

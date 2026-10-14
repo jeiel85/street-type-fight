@@ -4,9 +4,16 @@
 
 **자판으로 치고받는 2.5D 동네 대난투**
 
+[![Pages](https://github.com/jeiel85/street-type-fight/actions/workflows/pages.yml/badge.svg)](https://jeiel85.github.io/street-type-fight/)
 ![Stage](https://img.shields.io/badge/stage-P0%20전투%20프로토타입-ff8a00)
 ![Stack](https://img.shields.io/badge/Three.js-TypeScript-3178C6?logo=typescript&logoColor=white)
 ![Assets](https://img.shields.io/badge/외부%20애셋-0개-2b2233)
+
+### [▶ 브라우저에서 바로 플레이](https://jeiel85.github.io/street-type-fight/)
+
+설치도 가입도 필요 없어요. **PC + 물리 키보드**로 플레이합니다.
+
+![난전 장면: 방어 단어 두 개가 날아오는 가운데 공격 단어를 치는 중](public/og.png)
 
 <sub>🇺🇸 A real-time typing brawler in a small quarter-view open world. Every correct keystroke is a punch, skills are cast by typing their names, and incoming attacks are blocked by typing a defense word before impact. Korean 2-set (두벌식) input is decoded from physical keys, so it works regardless of the OS IME state. All art and sound are generated in code.</sub>
 
@@ -25,7 +32,17 @@
 
 자세한 설계는 [게임 디자인 문서(GDD)](docs/GDD.md)에 있습니다.
 
-## 실행
+## 요구 사항
+
+- PC와 물리 키보드(두벌식 자판 위치 기준. 한/영 상태는 상관없음)
+- WebGL을 쓸 수 있는 최신 Chrome · Edge · Firefox
+- 휴대폰으로 열면 PC로 링크를 보내는 안내 화면이 나옵니다
+
+## 개인정보
+
+로그인·분석 도구·서버 통신이 없습니다. 입력과 기록은 브라우저 밖으로 나가지 않고, 저장도 하지 않습니다.
+
+## 직접 실행
 
 ```bash
 npm install
@@ -71,6 +88,12 @@ docs/GDD.md          게임 디자인 문서
 
 설계 결정은 [DECISIONS.md](DECISIONS.md), 다음 할 일은 [BACKLOG.md](BACKLOG.md)를 보세요.
 
-## 현재 범위
+## 현재 범위와 알려진 제한
 
-싱글 플레이 전투 프로토타입입니다(나 + 봇 3 대 봇 4, 15킬 선승). 온라인 대전은 "타자 난투가 재미있는가"를 이 프로토타입으로 확인한 뒤에 진행합니다([GDD §12](docs/GDD.md#12-이번-프로토타입이-답해야-할-질문과-성공-기준)).
+- 싱글 플레이 전투 프로토타입입니다(나 + 봇 3 대 봇 4, 15킬 선승). **온라인 대전은 아직 없습니다.** "타자 난투가 재미있는가"를 이 데모로 확인한 뒤에 진행합니다([GDD §12](docs/GDD.md#12-이번-프로토타입이-답해야-할-질문과-성공-기준)).
+- 세벌식 자판, 영문 모드, 휴대폰은 지원하지 않습니다.
+- 변경 내역은 [CHANGELOG.md](CHANGELOG.md)에 있습니다.
+
+## 라이선스
+
+[MIT](LICENSE) — 코드, 그림(캔버스 생성), 효과음(Web Audio 합성) 모두 이 저장소에서 만들어집니다. 런타임 의존성은 [three.js](https://threejs.org)(MIT)뿐입니다.
