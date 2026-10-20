@@ -14,7 +14,7 @@ const STRATEGIES: { key: string; id: TargetStrategy; label: string }[] = [
   { key: '3', id: 'finish', label: '빈사 상태 적' },
 ];
 
-const MENU_ACTIONS = ['resume', 'mute', 'title', 'share', 'card-save', 'card-copy', 'card-share'] as const;
+const MENU_ACTIONS = ['resume', 'mute', 'title', 'share', 'install', 'card-save', 'card-copy', 'card-share'] as const;
 export type MenuAction = (typeof MENU_ACTIONS)[number];
 
 export interface ResultData {
@@ -57,6 +57,7 @@ export class Hud {
   private activeTyping = 0;
   private correct = 0;
   private wrong = 0;
+  canInstall = false;
   onMenuAction: (action: MenuAction) => void = () => {};
 
   constructor(parent: HTMLElement) {
@@ -113,7 +114,8 @@ export class Hud {
         </div>` : `
         <p class="diff">상대 실력 <kbd>←</kbd> <b>${DIFFICULTY_LABEL[diff]}</b> <kbd>→</kbd></p>
         <p class="start">Enter 를 눌러 시작</p>
-        <p class="note">한/영 전환과 상관없이 두벌식 자판 위치로 입력됩니다.</p>`}
+        <p class="note">한/영 전환과 상관없이 두벌식 자판 위치로 입력됩니다.</p>
+        ${this.canInstall ? '<div class="install-row"><button class="install-btn" data-action="install">앱으로 설치 <small>바탕화면 · 오프라인 플레이</small></button></div>' : ''}`}
       </div>`;
   }
 
@@ -124,6 +126,7 @@ export class Hud {
         <h2>잠깐 쉬는 중</h2>
         <button data-action="resume">계속하기 <small>Enter / Esc</small></button>
         <button data-action="mute">소리 ${muted ? '켜기' : '끄기'}</button>
+        ${this.canInstall ? '<button data-action="install">앱으로 설치</button>' : ''}
         <button data-action="title">처음 화면으로</button>
       </div>`;
   }

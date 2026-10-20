@@ -1,0 +1,39 @@
+{
+  "id": "./",
+  "name": "스트리트 타입 파이트",
+  "short_name": "타자파이트",
+  "description": "자판으로 치고받는 2.5D 동네 대난투. 한 타 한 타가 주먹, 스킬도 방어도 타자로. PC 키보드로 플레이하세요.",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#2b2233",
+  "theme_color": "#2b2233",
+  "categories": ["games", "action"],
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

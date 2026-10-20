@@ -121,6 +121,53 @@ let attractTarget: string | null = null;
 let attractUntil = 0;
 const held = new Set<string>();
 
+// ───────── PWA 설치 ─────────
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>;
+  readonly userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
+let installPrompt: BeforeInstallPromptEvent | null = null;
+
+function refreshInstallMenu(): void {
+  hud.canInstall = installPrompt !== null;
+  if (mode === 'title') hud.showTitle(difficulty, touchOnly, shareNote);
+  else if (mode === 'pause') hud.showPause(sfx.muted);
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  installPrompt = e as BeforeInstallPromptEvent;
+  refreshInstallMenu();
+});
+
+window.addEventListener('appinstalled', () => {
+  installPrompt = null;
+  refreshInstallMenu();
+});
+
+async function promptInstall(): Promise<void> {
+  if (!installPrompt) return;
+  const prompt = installPrompt;
+  installPrompt = null;
+  refreshInstallMenu();
+  try {
+    await prompt.prompt();
+    await prompt.userChoice;
+  } catch (err) {
+    console.warn(err);
+  }
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    void navigator.serviceWorker.register('./sw.js').catch((err) => {
+      console.warn('Service Worker 등록 실패:', err);
+    });
+  });
+}
+
 // ───────── 점수 카드 ─────────
 
 let pendingShot = false;
@@ -230,6 +277,7 @@ async function shareLink(): Promise<void> {
 
 hud.onMenuAction = (action) => {
   if (action === 'share') { void shareLink(); return; }
+  if (action === 'install') { void promptInstall(); return; }
   if (action === 'card-save' || action === 'card-copy' || action === 'card-share') { void cardAction(action); return; }
   if (action === 'resume') { mode = 'play'; hud.hideOverlay(); }
   if (action === 'mute') { sfx.setMuted(!sfx.muted); hud.showPause(sfx.muted); }

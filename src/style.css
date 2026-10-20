@@ -263,6 +263,8 @@ kbd {
 .panel .diff b { display: inline-block; min-width: 3em; color: var(--blue); }
 .panel .start { margin: 14px 0 4px; font-size: 22px; font-weight: 900; animation: blink 1s steps(2) infinite; }
 .panel .note { margin: 6px 0 0; font-size: 12px; color: #7a7085; }
+.install-row { margin-top: 12px; }
+.install-btn { padding: 8px 18px !important; font-size: 15px !important; }
 .panel button {
   pointer-events: auto; padding: 10px; border: 3px solid var(--ink); border-radius: 12px; background: var(--paper-2);
   box-shadow: 0 4px 0 var(--ink); font: 900 17px var(--font); color: var(--ink); cursor: pointer;
