@@ -265,6 +265,11 @@ kbd {
 .panel .note { margin: 6px 0 0; font-size: 12px; color: #7a7085; }
 .install-row { margin-top: 12px; }
 .install-btn { padding: 8px 18px !important; font-size: 15px !important; }
+.source-link {
+  display: inline-flex; align-items: center; gap: 5px; margin-top: 12px;
+  font-size: 12px; font-weight: 800; color: #7a7085; text-decoration: none;
+}
+.source-link:hover, .source-link:focus-visible { color: var(--ink); text-decoration: underline; }
 .panel button {
   pointer-events: auto; padding: 10px; border: 3px solid var(--ink); border-radius: 12px; background: var(--paper-2);
   box-shadow: 0 4px 0 var(--ink); font: 900 17px var(--font); color: var(--ink); cursor: pointer;
