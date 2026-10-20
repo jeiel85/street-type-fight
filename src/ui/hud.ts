@@ -14,6 +14,11 @@ const STRATEGIES: { key: string; id: TargetStrategy; label: string }[] = [
   { key: '3', id: 'finish', label: '빈사 상태 적' },
 ];
 
+/** 처음 화면 아래쪽의 소스 저장소 링크(새 탭). */
+const SOURCE_LINK =
+  '<a class="source-link" href="https://github.com/jeiel85/street-type-fight" target="_blank" rel="noopener noreferrer" aria-label="GitHub 소스 코드 (새 탭에서 열림)">' +
+  '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg> GitHub</a>';
+
 const MENU_ACTIONS = ['resume', 'mute', 'title', 'share', 'install', 'card-save', 'card-copy', 'card-share'] as const;
 export type MenuAction = (typeof MENU_ACTIONS)[number];
 
@@ -116,6 +121,7 @@ export class Hud {
         <p class="start">Enter 를 눌러 시작</p>
         <p class="note">한/영 전환과 상관없이 두벌식 자판 위치로 입력됩니다.</p>
         ${this.canInstall ? '<div class="install-row"><button class="install-btn" data-action="install">앱으로 설치 <small>바탕화면 · 오프라인 플레이</small></button></div>' : ''}`}
+        ${SOURCE_LINK}
       </div>`;
   }
 
