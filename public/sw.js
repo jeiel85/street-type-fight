@@ -6,7 +6,10 @@ const SW_VERSION = '__SW_VERSION__';
 const CACHE_NAME = `${CACHE_PREFIX}${SW_VERSION}`;
 const IS_BUILT = !SW_VERSION.startsWith('__');
 
-const PRECACHE_URLS = [
+// 주소에 해시가 없는 파일. 내용이 바뀌어도 주소가 같아서, 그냥 받으면 HTTP 캐시(Pages 10분)에 남은 옛 파일이
+// 새 빌드 캐시에 들어가 다음 배포까지 캐시 우선으로 나간다(manifest id를 고쳐도 Chrome이 옛 id를 보던 문제).
+// 그래서 설치 때 HTTP 캐시를 건너뛰고 새로 받는다.
+const UNHASHED_URLS = [
   './',
   './index.html',
   './manifest.webmanifest',
@@ -14,14 +17,18 @@ const PRECACHE_URLS = [
   './icon-192.png',
   './icon-512.png',
   './icon-maskable-512.png',
+];
+// 빌드가 넣는 번들 자산. 파일 이름에 내용 해시가 붙어 있어 HTTP 캐시를 그대로 써도 된다.
+const BUNDLE_URLS = [
   /* __SW_PRECACHE__ */
 ];
 
 self.addEventListener('install', (event) => {
+  const requests = [...UNHASHED_URLS.map((url) => new Request(url, { cache: 'reload' })), ...BUNDLE_URLS];
   event.waitUntil(
     caches
       .open(CACHE_NAME)
-      .then((cache) => Promise.allSettled(PRECACHE_URLS.map((url) => cache.add(url))))
+      .then((cache) => Promise.allSettled(requests.map((req) => cache.add(req))))
       .then(() => self.skipWaiting()),
   );
 });
